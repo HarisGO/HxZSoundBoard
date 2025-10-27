@@ -93,11 +93,28 @@ prog.oninput=()=>{if(audioCtx)audioCtx.currentTime=prog.value/100*audioCtx.durat
 vol.oninput=()=>{wall.querySelectorAll('audio').forEach(a=>a.volume=vol.value/100);};
 
 /* 5. SCAN SOURCES */
-const GD_ID='1d2EnaQQ3S2bwUN4JlMJydlifmJE5kZ6A'; // your folder
-async function scanGDrive(){
-  const url=`https://www.googleapis.com/drive/v3/files?q='${GD_ID}'+and+trashed=false&fields=files(name,webContentLink)&key=AIzaSyC1grvJpJLKxL5ebH2xhpBBODfu5M0I7ao`;
-  const j=await fetch(url).then(r=>r.json()).catch(()=>({files:[]}));
-  return j.files.filter(f=>/\.(mp3|wav|ogg|m4a)$/i.test(f.name)).map(f=>({name:f.name,url:f.webContentLink}));
+const SOURCE='sounds'; // your folder
+async function scanFolder(base=SOURCE){
+  const ext=['mp3','wav','ogg','m4a'];
+  const list=[];
+  for(const e of ext){
+    for(let i=0;i<99;i++){
+      const f=(i?'sound'+i:'sound')+'.'+e;
+      const r=await fetch(base+'/'+f,{method:'HEAD'}).catch(()=>null);
+      if(r&&r.ok) list.push({name:f, url:base+'/'+f});
+    }
+  }
+  // also scan the exact files we know
+  const known=[
+    "omg.mp3","fail.mp3","siren.mp3","indian.mp3",
+    "among-us-role-reveal-sound.mp3","drum.mp3","hello there.mp3",
+    "radiaton.mp3","shut it.mp3","afg ringtone.mp3"
+  ];
+  for(const k of known){
+    const r=await fetch(base+'/'+k,{method:'HEAD'}).catch(()=>null);
+    if(r&&r.ok) list.push({name:k, url:base+'/'+k});
+  }
+  return list;
 }
 async function refresh(){
   wall.innerHTML='';
