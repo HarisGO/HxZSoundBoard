@@ -7,6 +7,10 @@
 <link rel="stylesheet" href="styles.css">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔊</text></svg>">
 <meta name="theme-color" content="#0d0d0f">
+<style>
+/* hide upload block completely */
+#addCard { display: none !important; }
+</style>
 </head>
 <body>
 <header>
@@ -21,13 +25,6 @@
 
 <section id="wall"></section>
 
-<div id="addCard" class="card">
-  <div class="title">Post your sound</div>
-  <div class="lang">Upload MP3 / WAV / OGG – stored locally</div>
-  <button id="pickBtn">Choose file</button>
-  <input id="fileIn" type="file" accept="audio/*">
-</div>
-
 <div id="transport">
   <button id="playBtn">▶</button>
   <span id="time">0:00 / 0:00</span>
@@ -38,12 +35,12 @@
 <script type="module">
 /* ========= 1. I18N ========= */
 const i18n={
-  en:{headline:"SoundBoard",refresh:"Refresh",together:"Play together",post:"Post your sound",stored:"stored locally",choose:"Choose file",time:"Time"},
-  ur:{headline:"ساؤنڈ بورڈ",refresh:"ریفریش",together:"ایک ساتھ چلائیں",post:"اپنا آواز ڈالیں",stored:"براؤزر میں محفوظ",choose:"فائل چنیں",time:"وقت"},
-  ar:{headline:"لوحة الصوت",refresh:"تحديث",together:"شغّل معًا",post:"أضف صوتك",stored:"يُخزّن بالمتصفح",choose:"اختر ملفًا",time:"الوقت"},
-  ps:{headline:"غږونو بورډ",refresh:"تازه کول",together:"یوځای پلی کړئ",post:"خپل غږ ورکړئ",stored:"په براوزر کې خوندي",choose:"فایل وټاکئ",time:"وخت"},
-  fa:{headline:"تابلو صدا",refresh:"تازه‌سازی",together:"باهم پخش شود",post:"صدا خود را اضافه کنید",stored:"در مرورگر ذخیره می‌شود",choose:"انتخاب فایل",time:"زمان"},
-  zh:{headline:"音效板",refresh:"刷新",together:"同时播放",post:"上传你的声音",stored:"仅保存在浏览器",choose:"选择文件",time:"时间"}
+  en:{headline:"SoundBoard",refresh:"Refresh",together:"Play together",time:"Time"},
+  ur:{headline:"ساؤنڈ بورڈ",refresh:"ریفریش",together:"ایک ساتھ چلائیں",time:"وقت"},
+  ar:{headline:"لوحة الصوت",refresh:"تحديث",together:"شغّل معًا",time:"الوقت"},
+  ps:{headline:"غږونو بورډ",refresh:"تازه کول",together:"یوځای پلی کړئ",time:"وخت"},
+  fa:{headline:"تابلو صدا",refresh:"تازه‌سازی",together:"باهم پخش شود",time:"زمان"},
+  zh:{headline:"音效板",refresh:"刷新",together:"同时播放",time:"时间"}
 };
 let lang='en';
 function T(k){return i18n[lang][k]||i18n.en[k]}
@@ -52,9 +49,6 @@ function setLang(l){
   document.querySelector('#headline').textContent=T('headline');
   document.querySelector('#refresh .lbl').textContent=T('refresh');
   document.querySelector('label .lbl').textContent=T('together');
-  document.querySelector('#addCard .title').textContent=T('post');
-  document.querySelector('#addCard .lang').textContent=T('stored');
-  document.querySelector('#pickBtn').textContent=T('choose');
 }
 
 /* ========= 2. STATE ========= */
@@ -66,17 +60,12 @@ const vol=document.getElementById('volume');
 const overlap=document.getElementById('overlap');
 const timeLbl=document.getElementById('time');
 
-/* ========= 3. INDEXEDDB ========= */
-let db;
-import{openDB}from'https://unpkg.com/idb?module';
-(async()=>{db=await openDB('SB',1,{upgrade(d){d.createObjectStore('ups',{keyPath:'name'});}});})();
-
-/* ========= 4. UTILS ========= */
+/* ========= 3. UTILS ========= */
 function fmt(t){const m=Math.floor(t/60),s=Math.floor(t%60);return m+':'+(s<10?'0':'')+s;}
 function stopOthers(){if(!overlap.checked&&audioCtx){audioCtx.pause();audioCtx.currentTime=0;}}
 async function addCard(name,url){
   const card=document.createElement('div'); card.className='card'; card.dataset.name=name; card.dataset.src=url;
-  card.innerHTML=`<audio src="${url}"></audio><div class="title">${name}</div><div class="lang">${T('stored')}</div>`;
+  card.innerHTML=`<audio src="${url}"></audio><div class="title">${name}</div>`;
   const audio=card.querySelector('audio');
   card.onclick=()=>{stopOthers(); audio.play();};
   audio.onplay=()=>{wall.querySelectorAll('.card').forEach(c=>c.classList.remove('playing')); card.classList.add('playing'); audioCtx=audio; syncTransport(audio);};
@@ -92,16 +81,16 @@ playBtn.onclick=()=>{if(!audioCtx)return; if(audioCtx.paused){audioCtx.play(); p
 prog.oninput=()=>{if(audioCtx)audioCtx.currentTime=prog.value/100*audioCtx.duration;};
 vol.oninput=()=>{wall.querySelectorAll('audio').forEach(a=>a.volume=vol.value/100);};
 
-/* ========= 5. SCAN sounds/ FOLDER ========= */
+/* ========= 4. SCAN sounds/ FOLDER ========= */
 const SOURCE='sounds';
 async function scanFolder(base=SOURCE){
   const ext=['mp3','wav','ogg','m4a'];
   const list=[];
-  // known files (exact names you already have)
+  // exact files we already have
   const known=[
-    "omg.mp3","fail.mp3","siren.mp3","indian.mp3",
-    "among-us-role-reveal-sound.mp3","drum.mp3","hello there.mp3",
-    "radiaton.mp3","shut it.mp3","afg ringtone.mp3"
+    "afg ringtone.mp3","among-us-role-reveal-sound.mp3","drum.mp3","fail.mp3",
+    "hello there.mp3","indian.mp3","kid crying.mp3","omg.mp3",
+    "radiaton.mp3","shut it.mp3","siren.mp3"
   ];
   for(const k of known){
     const r=await fetch(base+'/'+k,{method:'HEAD'}).catch(()=>null);
@@ -121,27 +110,16 @@ async function refresh(){
   wall.innerHTML='';
   const local=await scanFolder();
   local.forEach(s=>addCard(s.name,s.url));
-  const ups=await db.getAll('ups');
-  for(const u of ups) addCard(u.name,URL.createObjectURL(u.blob));
 }
 document.getElementById('refresh').onclick=refresh;
 
-/* ========= 6. UPLOAD ========= */
-document.getElementById('pickBtn').onclick=()=>document.getElementById('fileIn').click();
-document.getElementById('fileIn').onchange=async(e)=>{
-  const f=e.target.files[0]; if(!f) return;
-  await db.put('ups',{name:f.name,blob:f});
-  addCard(f.name,URL.createObjectURL(f));
-  e.target.value='';
-};
-
-/* ========= 7. LANG & THEME ========= */
+/* ========= 5. LANG & THEME ========= */
 const sel=document.getElementById('lang'); Object.keys(i18n).forEach(l=>sel.add(new Option(l.toUpperCase(),l)));
 sel.value=localStorage.getItem('lang')||'en'; setLang(sel.value);
 sel.onchange=(e)=>setLang(e.target.value);
 document.getElementById('theme').onclick=()=>document.body.classList.toggle('light');
 
-/* ========= 8. KEYBOARD ========= */
+/* ========= 6. KEYBOARD ========= */
 window.onkeydown=e=>{
   if(!audioCtx) return;
   if(e.code==='Space'){e.preventDefault();playBtn.click();}
@@ -152,7 +130,7 @@ window.onkeydown=e=>{
   vol.oninput();
 };
 
-/* ========= 9. INIT ========= */
+/* ========= 7. INIT ========= */
 refresh();
 </script>
 </body>
