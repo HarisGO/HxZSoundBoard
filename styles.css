@@ -1,0 +1,33 @@
+:root{
+  --bg:#0d0d0f;
+  --card:rgba(255,255,255,.05);
+  --text:#e5e5e5;
+  --accent:#00c6ff;
+  --border:rgba(255,255,255,.08);
+}
+body.light{
+  --bg:#f5f5f5;
+  --card:rgba(0,0,0,.05);
+  --text:#222;
+  --accent:#0084ff;
+  --border:rgba(0,0,0,.1);
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,"Noto Sans",sans-serif}
+body{display:flex;flex-direction:column;align-items:center;background:var(--bg);color:var(--text);min-height:100vh;padding:1rem 1rem 6rem}
+header{width:100%;max-width:1200px;display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem}
+h1{font-size:1.6rem}
+#controls{display:flex;gap:.5rem;flex-wrap:wrap}
+select,button{padding:.45rem .7rem;border-radius:6px;border:1px solid var(--accent);background:transparent;color:var(--accent);cursor:pointer}
+button:hover{background:var(--accent);color:var(--bg)}
+#wall{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;width:100%;max-width:1200px}
+.card{width:170px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1rem;backdrop-filter:blur(8px);transition:transform .2s,box-shadow .2s;cursor:pointer;position:relative}
+.card:hover{transform:translateY(-4px);box-shadow:0 10px 24px rgba(0,198,255,.25)}
+.card.playing{box-shadow:0 0 20px var(--accent)}
+.card .title{font-weight:600;font-size:.95rem;margin-bottom:.2rem}
+.card .lang{color:var(--accent);font-size:.75em}
+input[type=file]{display:none}
+#transport{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid rgba(127,127,127,.2);padding:.7rem 1rem;display:flex;align-items:center;gap:.7rem;backdrop-filter:blur(12px)}
+#progress{flex:1;height:5px;-webkit-appearance:none;appearance:none;background:rgba(127,127,127,.3);border-radius:3px;outline:none}
+#progress::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:14px;height:14px;background:var(--accent);border-radius:50%}
+#volume{width:90px}
+#time{font-size:.75em;min-width:70px;text-align:center}
