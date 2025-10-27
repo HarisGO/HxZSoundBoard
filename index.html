@@ -36,7 +36,7 @@
 </div>
 
 <script type="module">
-/* 1. I18N */
+/* ========= 1. I18N ========= */
 const i18n={
   en:{headline:"SoundBoard",refresh:"Refresh",together:"Play together",post:"Post your sound",stored:"stored locally",choose:"Choose file",time:"Time"},
   ur:{headline:"ساؤنڈ بورڈ",refresh:"ریفریش",together:"ایک ساتھ چلائیں",post:"اپنا آواز ڈالیں",stored:"براؤزر میں محفوظ",choose:"فائل چنیں",time:"وقت"},
@@ -57,7 +57,7 @@ function setLang(l){
   document.querySelector('#pickBtn').textContent=T('choose');
 }
 
-/* 2. STATE */
+/* ========= 2. STATE ========= */
 let audioCtx=null;
 const wall=document.getElementById('wall');
 const playBtn=document.getElementById('playBtn');
@@ -66,12 +66,12 @@ const vol=document.getElementById('volume');
 const overlap=document.getElementById('overlap');
 const timeLbl=document.getElementById('time');
 
-/* 3. INDEXEDDB */
+/* ========= 3. INDEXEDDB ========= */
 let db;
 import{openDB}from'https://unpkg.com/idb?module';
 (async()=>{db=await openDB('SB',1,{upgrade(d){d.createObjectStore('ups',{keyPath:'name'});}});})();
 
-/* 4. UTILS */
+/* ========= 4. UTILS ========= */
 function fmt(t){const m=Math.floor(t/60),s=Math.floor(t%60);return m+':'+(s<10?'0':'')+s;}
 function stopOthers(){if(!overlap.checked&&audioCtx){audioCtx.pause();audioCtx.currentTime=0;}}
 async function addCard(name,url){
@@ -92,19 +92,12 @@ playBtn.onclick=()=>{if(!audioCtx)return; if(audioCtx.paused){audioCtx.play(); p
 prog.oninput=()=>{if(audioCtx)audioCtx.currentTime=prog.value/100*audioCtx.duration;};
 vol.oninput=()=>{wall.querySelectorAll('audio').forEach(a=>a.volume=vol.value/100);};
 
-/* 5. SCAN SOURCES */
-const SOURCE='sounds'; // your folder
+/* ========= 5. SCAN sounds/ FOLDER ========= */
+const SOURCE='sounds';
 async function scanFolder(base=SOURCE){
   const ext=['mp3','wav','ogg','m4a'];
   const list=[];
-  for(const e of ext){
-    for(let i=0;i<99;i++){
-      const f=(i?'sound'+i:'sound')+'.'+e;
-      const r=await fetch(base+'/'+f,{method:'HEAD'}).catch(()=>null);
-      if(r&&r.ok) list.push({name:f, url:base+'/'+f});
-    }
-  }
-  // also scan the exact files we know
+  // known files (exact names you already have)
   const known=[
     "omg.mp3","fail.mp3","siren.mp3","indian.mp3",
     "among-us-role-reveal-sound.mp3","drum.mp3","hello there.mp3",
@@ -114,20 +107,26 @@ async function scanFolder(base=SOURCE){
     const r=await fetch(base+'/'+k,{method:'HEAD'}).catch(()=>null);
     if(r&&r.ok) list.push({name:k, url:base+'/'+k});
   }
+  // generic scan (sound0.mp3 ... sound99.mp3 etc.)
+  for(const e of ext){
+    for(let i=0;i<50;i++){
+      const f=(i?`sound${i}`:'sound')+'.'+e;
+      const r=await fetch(base+'/'+f,{method:'HEAD'}).catch(()=>null);
+      if(r&&r.ok) list.push({name:f, url:base+'/'+f});
+    }
+  }
   return list;
 }
 async function refresh(){
   wall.innerHTML='';
-  // gdrive
-  const gd=await scanGDrive();
-  gd.forEach(s=>addCard(s.name,s.url));
-  // uploads
+  const local=await scanFolder();
+  local.forEach(s=>addCard(s.name,s.url));
   const ups=await db.getAll('ups');
   for(const u of ups) addCard(u.name,URL.createObjectURL(u.blob));
 }
 document.getElementById('refresh').onclick=refresh;
 
-/* 6. UPLOAD */
+/* ========= 6. UPLOAD ========= */
 document.getElementById('pickBtn').onclick=()=>document.getElementById('fileIn').click();
 document.getElementById('fileIn').onchange=async(e)=>{
   const f=e.target.files[0]; if(!f) return;
@@ -136,13 +135,13 @@ document.getElementById('fileIn').onchange=async(e)=>{
   e.target.value='';
 };
 
-/* 7. LANG & THEME */
+/* ========= 7. LANG & THEME ========= */
 const sel=document.getElementById('lang'); Object.keys(i18n).forEach(l=>sel.add(new Option(l.toUpperCase(),l)));
 sel.value=localStorage.getItem('lang')||'en'; setLang(sel.value);
 sel.onchange=(e)=>setLang(e.target.value);
 document.getElementById('theme').onclick=()=>document.body.classList.toggle('light');
 
-/* 8. KEYBOARD */
+/* ========= 8. KEYBOARD ========= */
 window.onkeydown=e=>{
   if(!audioCtx) return;
   if(e.code==='Space'){e.preventDefault();playBtn.click();}
@@ -153,7 +152,7 @@ window.onkeydown=e=>{
   vol.oninput();
 };
 
-/* 9. INIT */
+/* ========= 9. INIT ========= */
 refresh();
 </script>
 </body>
